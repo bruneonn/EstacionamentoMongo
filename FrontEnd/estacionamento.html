@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estacionamento</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #333;
+  }
+
+  header {
+    background: #2c3e50;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  header h1 { font-size: 20px; font-weight: bold; }
+  header span { font-size: 13px; color: #aaa; }
+
+  .status-bar {
+    background: #ecf0f1;
+    border-bottom: 1px solid #ddd;
+    padding: 8px 24px;
+    font-size: 13px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ccc;
+  }
+  .dot.online { background: #27ae60; }
+  .dot.offline { background: #e74c3c; }
+
+  .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #2c3e50;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    background: #ddd;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    color: #555;
+    margin-right: 4px;
+  }
+
+  .tab.active {
+    background: #2c3e50;
+    color: white;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #2c3e50;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
+    text-transform: uppercase;
+  }
+
+  input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #2c3e50;
+  }
+
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-primary { background: #2c3e50; color: white; }
+  .btn-primary:hover { background: #34495e; }
+
+  .btn-secondary { background: #ecf0f1; color: #333; border: 1px solid #ccc; }
+  .btn-secondary:hover { background: #ddd; }
+
+  .btn-danger { background: #e74c3c; color: white; }
+  .btn-danger:hover { background: #c0392b; }
+
+  .btn-small { padding: 4px 10px; font-size: 12px; }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+  }
+
+  .veiculo-linha {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .veiculo-linha .form-group { min-width: 100px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  th {
+    text-align: left;
+    background: #f4f4f4;
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  td {
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  .prop-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .prop-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .prop-nome { font-size: 16px; font-weight: bold; color: #2c3e50; }
+  .prop-cpf { font-size: 13px; color: #777; margin-top: 2px; }
+
+  .prop-acoes { display: flex; gap: 6px; }
+
+  .msg {
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .msg.ok { background: #d5f5e3; color: #1e8449; border: 1px solid #27ae60; }
+  .msg.erro { background: #fadbd8; color: #922b21; border: 1px solid #e74c3c; }
+
+  .vazio { text-align: center; padding: 32px; color: #aaa; font-size: 14px; }
+
+  .secao-veiculos { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; text-transform: uppercase; }
+
+  #modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #modal-overlay.aberto { display: flex; }
+
+  #modal-caixa {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: 16px;
+  }
+
+  #modal-caixa h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #2c3e50;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>&#127963;</div>
+  <div>
+    <h1>Estacionamento</h1>
+    <span>Gerenciamento de proprietários e veículos</span>
+  </div>
+</header>
+
+<div class="status-bar">
+  <div class="dot" id="dot"></div>
+  <span id="status-txt">Verificando conexão com o backend...</span>
+</div>
+
+<div class="container">
+
+  <div id="msg" class="msg"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="trocarAba('lista')">Proprietários</button>
+    <button class="tab" onclick="trocarAba('cadastro')">Cadastrar novo</button>
+  </div>
+
+  <!-- ABA LISTA -->
+  <div class="section active" id="aba-lista">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span id="total-label" style="font-size:14px; color:#555;"></span>
+      <button class="btn-secondary" onclick="carregarLista()">&#8635; Atualizar</button>
+    </div>
+    <div id="lista"></div>
+  </div>
+
+  <!-- ABA CADASTRO -->
+  <div class="section" id="aba-cadastro">
+    <div class="card">
+      <h2>Dados do proprietário</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome completo</label>
+          <input type="text" id="c-nome" placeholder="Ex: João Silva">
+        </div>
+        <div class="form-group">
+          <label>CPF</label>
+          <input type="text" id="c-cpf" placeholder="000.000.000-00">
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span class="secao-veiculos">Veículos</span>
+          <button class="btn-secondary btn-small" onclick="addVeiculo('c')">+ Adicionar veículo</button>
+        </div>
+        <div id="c-veiculos">
+          <p style="font-size:13px; color:#aaa;">Nenhum veículo adicionado.</p>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="limparCadastro()">Limpar</button>
+        <button class="btn-primary" onclick="cadastrar()">Cadastrar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL EDIÇÃO -->
+<div id="modal-overlay">
+  <div id="modal-caixa">
+    <h2>Editar proprietário</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="e-nome">
+      </div>
+      <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="e-cpf">
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span class="secao-veiculos">Veículos</span>
+        <button class="btn-secondary btn-small" onclick="addVeiculo('e')">+ Adicionar veículo</button>
+      </div>
+      <div id="e-veiculos"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = 'http://localhost:8081/proprietario';
+  let contC = 0, contE = 0, idEditando = null;
+
+  async function ping() {
+    try {
+      const r = await fetch(BASE, { signal: AbortSignal.timeout(3000) });
+      if (r.ok) {
+        document.getElementById('dot').className = 'dot online';
+        document.getElementById('status-txt').textContent = 'Backend conectado — http://localhost:8081';
+      }
+    } catch {
+      document.getElementById('dot').className = 'dot offline';
+      document.getElementById('status-txt').textContent = 'Backend offline — inicie o servidor na porta 8081';
+    }
+  }
+
+  function showMsg(texto, tipo) {
+    const el = document.getElementById('msg');
+    el.textContent = texto;
+    el.className = 'msg ' + tipo;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  function trocarAba(aba) {
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', ['lista', 'cadastro'][i] === aba)
+    );
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('aba-' + aba).classList.add('active');
+    if (aba === 'lista') carregarLista();
+  }
+
+  async function carregarLista() {
+    const lista = document.getElementById('lista');
+    lista.innerHTML = '<p style="color:#aaa;font-size:14px;">Carregando...</p>';
+    try {
+      const r = await fetch(BASE);
+      const dados = await r.json();
+      document.getElementById('total-label').textContent =
+        dados.length + ' proprietário' + (dados.length !== 1 ? 's' : '') + ' cadastrado' + (dados.length !== 1 ? 's' : '');
+      if (!dados.length) {
+        lista.innerHTML = '<div class="vazio">Nenhum proprietário cadastrado.</div>';
+        return;
+      }
+      lista.innerHTML = dados.map(p => `
+        <div class="prop-card">
+          <div class="prop-top">
+            <div>
+              <div class="prop-nome">${p.nome}</div>
+              <div class="prop-cpf">CPF: ${p.cpf}</div>
+            </div>
+            <div class="prop-acoes">
+              <button class="btn-secondary btn-small" onclick="abrirEdicao('${p._id}')">&#9998; Editar</button>
+              <button class="btn-danger btn-small" onclick="excluir('${p._id}', '${p.nome.replace(/'/g, "\\'")}')">&#128465; Excluir</button>
+            </div>
+          </div>
+          ${p.veiculos && p.veiculos.length ? `
+            <div class="secao-veiculos">Veículos (${p.veiculos.length})</div>
+            <table>
+              <thead><tr><th>Placa</th><th>Ano</th><th>Mensalidade</th></tr></thead>
+              <tbody>${p.veiculos.map(v => `
+                <tr>
+                  <td>${v.placa}</td>
+                  <td>${v.ano}</td>
+                  <td>R$ ${Number(v.mensalidade).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>` : '<p style="font-size:13px;color:#aaa;">Sem veículos cadastrados.</p>'}
+        </div>`).join('');
+    } catch {
+      lista.innerHTML = '<div class="vazio">Erro ao carregar. Verifique o backend.</div>';
+    }
+  }
+
+  function linhaVeiculo(prefix, n, placa = '', ano = '', mens = '') {
+    return `<div class="veiculo-linha" id="${prefix}-vrow-${n}">
+      <div class="form-group"><label>Placa</label>
+        <input type="text" id="${prefix}-placa-${n}" value="${placa}" placeholder="ABC1234" style="text-transform:uppercase">
+      </div>
+      <div class="form-group"><label>Ano</label>
+        <input type="number" id="${prefix}-ano-${n}" value="${ano}" placeholder="2020" min="1950" max="2030" style="max-width:90px;">
+      </div>
+      <div class="form-group"><label>Mensalidade (R$)</label>
+        <input type="number" id="${prefix}-mens-${n}" value="${mens}" placeholder="200.00" step="0.01" min="0" style="max-width:130px;">
+      </div>
+      <button class="btn-danger btn-small" style="margin-bottom:1px;" onclick="document.getElementById('${prefix}-vrow-${n}').remove()">&#10005;</button>
+    </div>`;
+  }
+
+  function addVeiculo(prefix) {
+    const container = document.getElementById(prefix + '-veiculos');
+    const placeholder = container.querySelector('p');
+    if (placeholder) placeholder.remove();
+    if (prefix === 'c') { contC++; container.insertAdjacentHTML('beforeend', linhaVeiculo('c', contC)); }
+    else { contE++; container.insertAdjacentHTML('beforeend', linhaVeiculo('e', contE)); }
+  }
+
+  function coletarVeiculos(prefix) {
+    const rows = document.querySelectorAll(`[id^="${prefix}-vrow-"]`);
+    const lista = [];
+    rows.forEach(row => {
+      const n = row.id.split('-').pop();
+      const placa = (document.getElementById(`${prefix}-placa-${n}`)?.value || '').trim().toUpperCase();
+      const ano = parseInt(document.getElementById(`${prefix}-ano-${n}`)?.value);
+      const mensalidade = parseFloat(document.getElementById(`${prefix}-mens-${n}`)?.value);
+      if (placa && ano && !isNaN(mensalidade)) lista.push({ placa, ano, mensalidade });
+    });
+    return lista;
+  }
+
+  async function cadastrar() {
+    const nome = document.getElementById('c-nome').value.trim();
+    const cpf = document.getElementById('c-cpf').value.trim();
+    if (!nome || !cpf) { showMsg('Nome e CPF são obrigatórios.', 'erro'); return; }
+    const veiculos = coletarVeiculos('c');
+    try {
+      const r = await fetch(BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, cpf, veiculos })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showMsg('Proprietário cadastrado com sucesso!', 'ok');
+        limparCadastro();
+        trocarAba('lista');
+      } else {
+        showMsg(d.error || 'Erro ao cadastrar.', 'erro');
+      }
+    } catch { showMsg('Sem conexão com o backend.', 'erro'); }
+  }
+
+  function limparCadastro() {
+    document.getElementById('c-nome').value = '';
+    document.getElementById('c-cpf').value = '';
+    document.getElementById('c-veiculos').innerHTML = '<p style="font-size:13px;color:#aaa;">Nenhum veículo adicionado.</p>';
+    contC = 0;
+  }
+
+  async function excluir(id, nome) {
+    if (!confirm('Excluir ' + nome + '? Essa ação não pode ser desfeita.')) return;
+    try {
+      const r = await fetch(BASE + '/' + id, { method: 'DELETE' });
+      if (r.ok) { showMsg('Proprietário excluído.', 'ok'); carregarLista(); }
+      else showMsg('Erro ao excluir.', 'erro');
+    } catch { showMsg('Sem conexão com o backend.', 'erro'); }
+  }
+
+  async function abrirEdicao(id) {
+    try {
+      const r = await fetch(BASE + '/' + id);
+      const p = await r.json();
+      idEditando = id;
+      document.getElementById('e-nome').value = p.nome;
+      document.getElementById('e-cpf').value = p.cpf;
+      contE = 0;
+      const ev = document.getElementById('e-veiculos');
+      ev.innerHTML = '';
+      if (p.veiculos && p.veiculos.length) {
+        p.veiculos.forEach(v => {
+          contE++;
+          ev.insertAdjacentHTML('beforeend', linhaVeiculo('e', contE, v.placa, v.ano, v.mensalidade));
+        });
+      }
+      document.getElementById('modal-overlay').classList.add('aberto');
+    } catch { showMsg('Erro ao carregar dados.', 'erro'); }
+  }
+
+  function fecharModal() {
+    document.getElementById('modal-overlay').classList.remove('aberto');
+    idEditando = null;
+  }
+
+  async function salvarEdicao() {
+    const nome = document.getElementById('e-nome').value.trim();
+    const cpf = document.getElementById('e-cpf').value.trim();
+    if (!nome || !cpf) { showMsg('Nome e CPF são obrigatórios.', 'erro'); return; }
+    const veiculos = coletarVeiculos('e');
+    try {
+      const r = await fetch(BASE + '/' + idEditando, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, cpf, veiculos })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showMsg('Dados atualizados com sucesso!', 'ok');
+        fecharModal();
+        carregarLista();
+      } else {
+        showMsg(d.error || 'Erro ao salvar.', 'erro');
+      }
+    } catch { showMsg('Sem conexão com o backend.', 'erro'); }
+  }
+
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+
+  ping();
+  carregarLista();
+</script>
+</body>
+</html>
